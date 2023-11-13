@@ -1,0 +1,113 @@
+---
+title: "Assignment-4 Clustering"
+author: "Vineeth Kadiyam"
+date: "2023-11-12"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+---
+```{r}
+library(readr)
+Phaceut_RD <- read.csv("D:/Users/kadiyam/Documents/Pharmaceuticals.csv")
+View(Phaceut_RD)
+```
+
+```{r}
+library(ggplot2)
+library(factoextra)
+library(flexclust)
+library(cluster)
+library(tidyverse)
+summary(Phaceut_RD)
+
+#Task 1
+#Use only the numerical variables (1 to 9) to cluster the 21 firms. 
+#Justify the various choices #made in conducting the cluster analysis, 
+#such as weights for different variables, the specific 
+#clustering algorithm(s) used, the number of clusters formed, and so on. 
+R <- na.omit(Phaceut_RD)
+R
+row.names <- R[,1]
+Phaceut1 <-  R[,3:11]
+head(Phaceut1)
+Phaceut2 <- scale(Phaceut1)
+head(Phaceut2)
+fviz_nbclust(Phaceut2, kmeans, method = "wss") +
+  labs(subtitle = "Elbow Method")
+fviz_nbclust(Phaceut2, kmeans, method = "silhouette") + labs(subtitle = "Silhouette Method")
+fviz_nbclust(Phaceut2, kmeans, method = "gap_stat") + labs(subtitle = "Gap Stat Method")
+```
+```{r}
+set.seed(64060)
+k5 <- kmeans(Phaceut2, centers = 5, nstart = 25)
+k5 $centers
+fviz_cluster(k5, data = Phaceut2)
+k5
+Distance <- dist(Phaceut2, method = "euclidian")
+fviz_dist(Distance)
+Fitting <- kmeans(Phaceut2,5)
+aggregate(Phaceut2,by = list(Fitting$cluster), FUN = mean)
+Phaceut3 <- data.frame(Phaceut2,Fitting$cluster)
+Phaceut3
+library(cluster)
+clusplot(Phaceut2,Fitting$cluster, color = TRUE, shade = TRUE, 
+         labels = 2,
+         lines = 0)
+```
+
+
+```{r}
+#Task 2
+#Interpret the clusters with respect to the numerical variables used in forming the clusters. Is there a pattern in the clusters with respect to the numerical variables (10 to 12)? (those \n #not used in forming the clusters)
+
+aggregate(Phaceut2, by = list(Fitting$cluster), FUN = mean)
+Pharmacies <- data.frame(Phaceut2,k5$cluster)
+Pharmacies
+#CLuster 1:- JNJ, MRK, GSK, PFE
+#Cluster 1: Highest Market_Cap and lowest Beta/PE Ratio
+#Cluster 2:- AHM, WPI, AVE
+#Cluster 2: Highest Revenue Growth and lowest PE/Asset Turnover Ratio
+#Cluster 3:- CHTT, IVX, MRX, ELN
+#Cluster 3: Highest Beta/leverage/Asset Turnover Ratio and lowest 
+#Net_Profit_Margin, PE ratio and Marke#Cluster
+#Cluster 4:- BAY, PHA,AGN
+#Cluster 4: Highest PE ratio and lowest Leverage/Asset_Turnover
+#Cluster 5:- ABT, WYE, AZN, SGP, BMY, NVS, LLY
+#Cluster 5: Highest Net_Proft_Margin and lowest Leverage
+```
+
+
+```{r}
+
+RD <- Phaceut_RD[12:14] %>% mutate(Clusters=k5$cluster)
+ggplot(RD, mapping = aes(factor(Clusters), fill =Median_Recommendation))+geom_bar(position='dodge')+labs(x ='Clusters')
+ggplot(RD, mapping = aes(factor(Clusters),fill = Location))+
+  geom_bar(position = 'dodge')+labs(x ='Clusters')
+ggplot(RD, mapping = aes(factor(Clusters),fill = Exchange))+geom_bar(position = 'dodge')+
+  labs(x ='Clusters')
+#The graphs above show that there is a faint pattern in the clusters.
+
+#Considering the fact that Cluster 1 has a distinct Hold and Moderate Buy median, a different count from the US and Germany, and a different nation count, the firms are evenly distributed throughout AMEX,NASDAQ, and NYSE.
+
+#The cluster 2 is only listed on the NYSE, has equal Hold and Moderate Buy 
+#medians, and is evenly divided across the US and Canada.
+
+#The Cluster 3 has trading on the NYSE and has equal Moderate Buy and Sell medians, as well as a distinct count from France, Ireland, and the United States.
+
+#Cluster 4 has the highest Hold median, followed by Moderate Buy, Strong Buy, and Hold medians. They are from the United States, the United Kingdom, and Switzerland, and they are traded on the New York Stock Exchange.
+
+#The Cluster 5 is spread out throughout the United States and the United Kingdom, has the same hold and moderate buy medians, and is also traded on the NYSE.
+```
+
+
+```{r}
+#TASK 3
+#Provide an appropriate name for each cluster using any or all of the variables in the dataset. 
+
+#Cluster 1 :- Buy Cluster
+#Cluster 2 :- Sceptical Cluster
+#Cluster 3 :- Moderate Buy Cluster
+#Cluster 4 :- Hold Cluster
+#Cluster 5 :- High Hold Cluster 
+```
